@@ -1,0 +1,76 @@
+# Ignore bundler config.
+/.bundle
+
+# Ignore all logfiles and tempfiles.
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+
+# Ignore pidfiles, but keep the directory.
+/tmp/pids/*
+!/tmp/pids/
+!/tmp/pids/.keep
+
+# Ignore uploaded files in development.
+/storage/*
+!/storage/.keep
+/tmp/storage/*
+!/tmp/storage/
+!/tmp/storage/.keep
+
+# Ignore master key for decrypting credentials and more.
+/config/master.key
+
+# Ignore database configuration
+/config/database.yml
+
+# Ignore the default SQLite database.
+/db/*.sqlite3
+/db/*.sqlite3-*
+
+# Ignore all .env files
+.env*
+
+# Ignore public uploads
+/public/uploads
+
+# Ignore precompiled assets
+/public/assets
+
+# Ignore yarn files
+/yarn-error.log
+yarn-debug.log*
+.yarn-integrity
+
+# Ignore node modules
+/node_modules
+
+# Ignore coverage reports
+/coverage
+
+# Ignore Mac and Linux file system files
+*.swp
+.DS_Store
+
+# Ignore .idea files
+.idea
+
+# Ignore .ruby-version file
+.ruby-version
+
+# Ignore application configuration
+/config/application.yml
+
+# Ignore credentials
+/config/credentials.yml.enc
+
+# Ignore byebug command history file.
+.byebug_history
+
+# Ignore sitemap
+/public/sitemap.xml.gz
+
+# Ignore redis dump file
+dump.rdb
+

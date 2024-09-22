@@ -1,0 +1,55 @@
+version: '3'
+services:
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: rental_solution_development
+      POSTGRES_USER: rental_user
+      POSTGRES_PASSWORD: rental_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rental_user -d rental_solution_development"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
+    volumes:
+      - .:/rental_solution
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: rental_solution_development
+      POSTGRES_USER: rental_user
+      POSTGRES_PASSWORD: rental_password
+      REDIS_URL: redis://redis:6379/0
+
+  redis:
+    image: redis:6.2-alpine
+    ports:
+      - '6379:6379'
+
+  sidekiq:
+    build: .
+    command: bundle exec sidekiq
+    volumes:
+      - .:/rental_solution
+    depends_on:
+      - db
+      - redis
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: rental_solution_development
+      POSTGRES_USER: rental_user
+      POSTGRES_PASSWORD: rental_password
+      REDIS_URL: redis://redis:6379/0
+
+volumes:
+  postgres_data:
