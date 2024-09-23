@@ -6,15 +6,29 @@ module Commodities
     end
 
     def call
-      commodity = nil
       ActiveRecord::Base.transaction do
         commodity = @user.commodities.new(@params)
-        commodity.save!
-        commodity.start_bidding!
+
+        if commodity.save
+          commodity.start_bidding!
+          ServiceResult.success(format_commodity(commodity))
+        else
+          ServiceResult.error(commodity.errors.full_messages.join(", "))
+          raise ActiveRecord::Rollback
+        end
       end
-      ServiceResult.success(commodity: commodity)
-    rescue ActiveRecord::RecordInvalid => e
-      ServiceResult.error(e.record.errors.full_messages)
+    rescue StandardError => e
+      ServiceResult.error("Failed to create commodity: #{e.message}")
+    end
+
+    private
+
+    def format_commodity(commodity)
+      {
+        commodity_id: commodity.id,
+        quote_price_per_month: commodity.minimum_monthly_charge,
+        created_at: commodity.created_at
+      }
     end
   end
 end

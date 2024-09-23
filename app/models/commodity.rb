@@ -24,28 +24,30 @@ class Commodity < ApplicationRecord
     state :cancelled
 
     event :start_bidding do
-      transitions from: :available, to: :bidding, after: :schedule_bid_closing
+      transitions from: :available, to: :bidding do
+        after do
+          update(bidding_start_time: Time.current)
+          CloseBidWindowJob.schedule(self)
+        end
+      end
     end
 
     event :rent do
       transitions from: :bidding, to: :rented
     end
 
-    event :cancel do
-      transitions from: [:available, :bidding], to: :cancelled
-    end
-
     event :make_available do
       transitions from: [:bidding, :rented, :cancelled], to: :available
+    end
+
+    event :cancel do
+      transitions from: :bidding, to: :cancelled
     end
   end
 
   private
 
-  def schedule_bid_closing
-    job_id = "close_bid_window_#{id}"
-    unless CloseBidWindowJob.scheduled?(id)
-      CloseBidWindowJob.set(wait: 3.hours).perform_later(id, job_id: job_id)
-    end
+  def bidding_window_open?
+    bidding? && Time.current < (updated_at + 3.hours)
   end
 end

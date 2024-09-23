@@ -8,11 +8,6 @@ class CloseBidWindowJob < ApplicationJob
     CloseBidWindowService.call(commodity)
   end
 
-  def self.scheduled?(commodity_id)
-    job_id = "close_bid_window_#{commodity_id}"
-    Sidekiq::ScheduledSet.new.any? { |job| job.args[0]['job_id'] == job_id }
-  end
-
   def self.schedule(commodity)
     set(wait: 3.hours).perform_later(commodity.id)
   end

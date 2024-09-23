@@ -2,29 +2,18 @@ module Api
   module V1
     class CommoditiesController < ApplicationController
       before_action :authenticate_user!
-      before_action :ensure_lender, only: [:create]
+      before_action :ensure_lender, only: [:create, :re_list]
 
       def create
         result = Commodities::CreateService.call(current_user, commodity_params)
-        Rails.logger.info "Result #{result.error} "
-        if result.success
-          render json: {
-            status: "success",
-            message: "Commodity listed successfully",
-            payload: {
-              commodity_id: result.data[:commodity].id,
-              quote_price_per_month: result.data[:commodity].minimum_monthly_charge,
-              created_at: result.data[:commodity].created_at
-            }
-          }, status: :created
-        else
-          render json: {
-            status: "error",
-            message: "Commodity could not be listed",
-            payload: { errors: result.error }
-          }, status: :unprocessable_entity
-        end
+        render_service_result(result)
       end
+
+      def re_list
+        result = Commodities::RelistService.call(current_user, params[:commodity_id], relist_params)
+        render_service_result(result)
+      end
+
 
       def index
         commodities = if params[:category].present?
@@ -51,6 +40,26 @@ module Api
 
       def commodity_params
         params.require(:commodity).permit(:name, :description, :minimum_monthly_charge, :category, :bid_strategy)
+      end
+
+      def relist_params
+        params.permit(:quote_price_per_month)
+      end
+
+      def render_service_result(result)
+        if result.success
+          render json: {
+            status: "success",
+            message: "Operation completed successfully",
+            payload: result.data
+          }, status: :ok
+        else
+          render json: {
+            status: "error",
+            message: result.error,
+            payload: {}
+          }, status: :unprocessable_entity
+        end
       end
 
       def ensure_lender

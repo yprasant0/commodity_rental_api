@@ -9,10 +9,13 @@ Rails.application.routes.draw do
         delete 'logout', to: 'sessions#destroy'
       end
 
-      resources :commodities, only: [:create, :index, :show]
+      post 'commodity/list', to: 'commodities#create'
+      get 'commodity/list', to: 'commodities#index'
+      post 'commodity/re-list', to: 'commodities#re_list'
       post 'commodity/bid', to: 'bids#create'
+      post 'commodity/re-bid', to: 'bids#re_bid'
+      get 'commodity/:id/bids', to: 'bids#index'
 
-      # resources :bids, only: [:show, :update]
     end
   end
 end
