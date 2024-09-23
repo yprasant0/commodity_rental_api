@@ -15,7 +15,7 @@ Rails.application.routes.draw do
       post 'commodity/bid', to: 'bids#create'
       post 'commodity/re-bid', to: 'bids#re_bid'
       get 'commodity/:id/bids', to: 'bids#index'
-
+      get 'commodity/my-commodities', to: 'commodities#my_commodities'
     end
   end
 end

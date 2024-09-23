@@ -3,7 +3,7 @@ class Commodity < ApplicationRecord
 
   belongs_to :lender, class_name: 'User'
   has_many :bids, dependent: :destroy
-  has_many :rentals, dependent: :destroy
+  has_one :rental
 
   CATEGORIES = ['Electronic Appliances', 'Electronic Accessories', 'Furniture', 'Men\'s wear', 'Women\'s wear', 'Shoes'].freeze
 

@@ -2,10 +2,15 @@ module Api
   module V1
     class CommoditiesController < ApplicationController
       before_action :authenticate_user!
-      before_action :ensure_lender, only: [:create, :re_list]
+      before_action :ensure_lender, only: [:create, :re_list, :my_commodities]
 
       def create
         result = Commodities::CreateService.call(current_user, commodity_params)
+        render_service_result(result)
+      end
+
+      def my_commodities
+        result = Commodities::ListMyCommoditiesService.call(current_user)
         render_service_result(result)
       end
 
@@ -50,7 +55,7 @@ module Api
         if result.success
           render json: {
             status: "success",
-            message: "Operation completed successfully",
+            message: "Request processed successfully",
             payload: result.data
           }, status: :ok
         else
