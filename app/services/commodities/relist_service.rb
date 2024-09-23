@@ -1,26 +1,49 @@
 module Commodities
   class RelistService < ApplicationService
-    def initialize(commodity, user, params)
-      @commodity = commodity
+    def initialize(user, commodity_id, params)
       @user = user
+      @commodity_id = commodity_id
       @params = params
     end
 
     def call
-      return ServiceResult.error('Unauthorized') unless @commodity.lender == @user
-      return ServiceResult.error('Cannot relist rented commodity') if @commodity.rented?
+      commodity = @user.commodities.find_by(id: @commodity_id)
+      return ServiceResult.error("Commodity not found") unless commodity
 
       ActiveRecord::Base.transaction do
-        @commodity.lock!
-        @commodity.assign_attributes(@params)
-        @commodity.start_bidding!
-        @commodity.save!
+        commodity.with_lock do
+          if commodity.may_make_available?
+            commodity.make_available!
+            update_quote_price(commodity) if @params[:quote_price_per_month].present?
+            if commodity.start_bidding!
+              ServiceResult.success(format_commodity(commodity))
+            else
+              ServiceResult.error("Failed to start bidding")
+            end
+          else
+            ServiceResult.error("Cannot relist the commodity in its current state")
+          end
+        end
       end
-      ServiceResult.success(commodity: @commodity)
-    rescue ActiveRecord::RecordInvalid => e
-      ServiceResult.error(e.record.errors.full_messages)
-    rescue AASM::InvalidTransition => e
-      ServiceResult.error("Invalid state transition: #{e.message}")
+    rescue ActiveRecord::StaleObjectError
+      ServiceResult.error("Concurrent update detected. Please refresh and try again.")
+    rescue StandardError => e
+      ServiceResult.error("An error occurred: #{e.message}")
+    end
+
+    private
+
+    def update_quote_price(commodity)
+      commodity.update!(minimum_monthly_charge: @params[:quote_price_per_month])
+    end
+
+    def format_commodity(commodity)
+      {
+        commodity_id: commodity.id,
+        quote_price_per_month: commodity.minimum_monthly_charge,
+        created_at: commodity.created_at,
+        updated_at: commodity.updated_at
+      }
     end
   end
 end
